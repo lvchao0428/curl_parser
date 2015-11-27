@@ -30,14 +30,13 @@ void cpy_middle_to_str(UrlBuf* ub, char* str)
    strncpy(str, ub->str + beg, end - beg);
 }
 
-void push_CommonPart(CommonPart** cp, char* comstr)
+void push_CommonPart(CommonPart** cp, CommonPart* src)
 {
    CommonPart* head = *cp;
    CommonPart* p = head;
    if(*cp == NULL)
    {
 	  *cp = (CommonPart*)malloc(sizeof(CommonPart));
-
 	  (*cp)->next = NULL;
    }
    else
@@ -47,8 +46,8 @@ void push_CommonPart(CommonPart** cp, char* comstr)
 		 p = p->next;
 	  }
 	  CommonPart* q = (CommonPart*)malloc(sizeof(CommonPart));
-	  q->next = NULL;
-	  q->comStr = (char*)malloc(sizeof(char)*(strlen(comstr) + 1));
+	  bzero(q, sizeof(*q));
+	  q->comStr = (char*)malloc(sizeof(char)*(strlen(src->comStr) + 1));
 	  memcpy(q->comStr, comstr);
 	  p->next = q;
 
@@ -60,7 +59,19 @@ void push_CommonPart(CommonPart** cp, char* comstr)
 
 void del_dupUb(UrlBuf* head, CommonPart* cp)
 {
-   
+   //with dummy
+   UrlBuf* p = head;
+   while(p->next)
+   {
+	  if(strstr(p->next.str, cp->comStr))
+	  {
+		 UrlBuf* temp = p->next;
+		 p->next = p->next->next;
+		 free(temp);
+	  }
+	  if(p)
+		 p = p->next;
+   }
 }
 
 void extract_mergePart(UrlBuf* ub, CommonPart** cp)
@@ -70,6 +81,7 @@ void extract_mergePart(UrlBuf* ub, CommonPart** cp)
    dummyUb->next = ub;
    UrlBuf* p = dummyUb->next;
    UrlBuf* p2;
+   CommonPart* curCp = NULL;
    while(p)
    {
 	  p2 = p;
@@ -94,20 +106,20 @@ void extract_mergePart(UrlBuf* ub, CommonPart** cp)
 			   {
 				  p2 = p2->next;
 			   }
-			   else
-			   {//
-				  push_CommonPart(cp, comstr);
-			   }
 			   continue;
 			}
 			else
 			{
-			   p2 = p2->next;
-			   continue;
+			   //找到符合条件的公共字符串
+			   CommonPart* src = (CommonPart*)malloc(sizeof(CommonPart));
+			   bzero(src, sizeof(*src));
+			   src->comStr = (char*)malloc(sizeof(char)*(strlen(comstr) + 1));
+			   push_CommonPart(cp, src);
+			   del_dupUb(dummyUb, src);
 			}
 			
 		 }
-
+		 
 		 
 	  }
 
