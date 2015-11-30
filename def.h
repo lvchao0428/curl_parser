@@ -12,7 +12,7 @@
 typedef struct UrlBuf
 {
    int lineno;
-
+   char* siss; //存储最短可识别特征的字符串
    char* str;
    struct UrlBuf* next;
 }UrlBuf;

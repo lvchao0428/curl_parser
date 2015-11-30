@@ -9,7 +9,11 @@
 #include<stdlib.h>
 #include<string.h>
 #include"def.h"
-
+/*
+ *把url添加上序号并重新写入文件
+ *
+ *
+ * */
 void read_file(UrlBuf** ub, char* fileurl)
 {
    FILE* fp;

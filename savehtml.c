@@ -21,7 +21,7 @@ void print_UrlBuf(UrlBuf* ub)
    UrlBuf* p = ub;
    while(p)
    {
-	  printf("%d %s\n", p->lineno, p->str);
+	  printf("%d       %s\n", p->lineno, p->str);
 	  p = p->next;
    }
 }
@@ -104,7 +104,7 @@ int read_urls_to_UrlBuf(UrlBuf** ub, char* urlfilename)
    fp = fopen(urlfilename, "r");
    if(!fp)
    {
-	  printf("cannot open the fileurl\n");
+	  printf("cannot open the file %s\n", urlfilename);
 	  return -1;
    }
    int lineno = 1;
@@ -120,7 +120,7 @@ int read_urls_to_UrlBuf(UrlBuf** ub, char* urlfilename)
 		 j++;
 	  }
 	  tempno[j] = '\0';
-	  j++;		//skip '#'
+	  j++;		//skip '~'
 	  int intNo = atoi(tempno);
 	  if(*ub == NULL)
 	  {
@@ -130,7 +130,7 @@ int read_urls_to_UrlBuf(UrlBuf** ub, char* urlfilename)
 		 (*ub)->lineno = intNo;
 		 (*ub)->str = (char*)malloc(sizeof(char)*(strlen(line) + 1));
 		 //strcpy((*ub)->str, line);
-		 memcpy((*ub)->str, line + j, strlen(line));
+		 memcpy((*ub)->str, line + j, sizeof(char)*(strlen(line) + 1));
 		 p = temp = *ub;
 	  }
 	  else
@@ -139,7 +139,7 @@ int read_urls_to_UrlBuf(UrlBuf** ub, char* urlfilename)
 		 memset(q, 0, sizeof(*q));
 		 q->str = (char*)malloc(sizeof(char)*(strlen(line) + 1));
 		 q->lineno = intNo;
-		 memcpy(q->str, line+j, strlen(line));
+		 memcpy(q->str, line+j, sizeof(char)*(strlen(line) + 1));
 		 p->next = q;
 		 p = p->next;
 	  }
