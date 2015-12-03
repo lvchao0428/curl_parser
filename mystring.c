@@ -9,6 +9,38 @@
 #include<malloc.h>
 #include<string.h>
 #include<stdlib.h>
+#include<ctype.h>
+
+int count_num(char* a)
+{
+   int i = 0;
+   int num = 0;
+   while(a[i] != '\0')
+   {
+	  if(isdigit(a[i]))
+	  {
+		 num++;
+	  }
+	  i++;
+   }
+
+   return num;
+}
+
+//change b to c if b == c
+char* replace(char* a, char* b, char * c)
+{
+   int i = 0;
+   while(a[i] != '\0')
+   {
+	  if(a[i] == b[0])
+	  {
+		 a[i] = c[0];
+	  }
+	  i++;
+   }
+   return a;
+}
 
 char* lcs(char* a, char* b)
 {

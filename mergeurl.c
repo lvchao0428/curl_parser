@@ -48,49 +48,25 @@ int cpy_middle_to_str(UrlBuf* ub, char* dest)
    }
 }
 
-int push_CommonPart(CommonPart** cp, CommonPart src)
-{
-   CommonPart* head = *cp;
-   CommonPart* p = head;
-   if(*cp == NULL)
-   {
-	  *cp = (CommonPart*)malloc(sizeof(CommonPart));
-	  (*cp)->comStr = (char*)malloc(sizeof(char)*(strlen(src.comStr) + 1));
-	  memcpy((*cp)->comStr, src.comStr, sizeof(char)*(strlen(src.comStr) + 1));
-	  (*cp)->next = NULL;
-   }
-   else
-   {
-	  while(p->next)
-	  {
-		 p = p->next;
-	  }
-	  CommonPart* q = (CommonPart*)malloc(sizeof(CommonPart));
-	  bzero(q, sizeof(*q));
-	  q->comStr = (char*)malloc(sizeof(char)*(strlen(src.comStr) + 1));
-	  memcpy(q->comStr, src.comStr, sizeof(char)*(strlen(src.comStr) + 1));
-	  p->next = q;
-
-   }
-
-   *cp = head;
-
-}
-
 
 /*
  *ret:0 fail del or null string.
  *ret:1 success del
  * */
-int del_dupUb(UrlBuf* dummy, char* siss)
+int del_dupUb(UrlBuf** ub, char* siss)
 {
+   UrlBuf* dummy = (UrlBuf*)malloc(sizeof(UrlBuf));
+   bzero(dummy, sizeof(*dummy));
+   dummy->next = *ub;
+   UrlBuf* headdummy = dummy;
    //with dummy
    if(dummy == NULL || dummy->next == NULL)
    {
 	  return 0;
    }
-
+   
    UrlBuf* p = dummy;
+   int sampleNum = 0;
    while(p && p->next)
    {
 	  if(strstr(p->next->str, siss))
@@ -98,60 +74,94 @@ int del_dupUb(UrlBuf* dummy, char* siss)
 		 UrlBuf* temp = p->next;
 		 
 		 p->next = p->next->next;
-
+		 //	insert 3 sample url
+		 free(temp->str);
 		 free(temp);
+		 sampleNum++;
 	  }
 	  else
 	  {
-		 if(p->next)
+		 if(p && p->next)
 			p = p->next;
-		 else
-			break;
 	  }
    }
-
+   *ub = headdummy->next;	//赋予新的头指针	 
 
    return 1;
 }
 
+void find_common_part(UrlBuf* head, char* siss)
+{
+   
+}
+
+void dedot(char* str)
+{
+   int i;
+   for(i = 0; i < strlen(str); ++i)
+   {
+	  str[i] = str[i+1];
+   }
+   str[i] = '\0';
+}
+
 void extract_mergePart(UrlBuf** ub, CommonPart** sList)
 {
-   UrlBuf* dummyUb = (UrlBuf*)malloc(sizeof(UrlBuf));
-   bzero(dummyUb, sizeof(UrlBuf));
-   dummyUb->next = *ub;
-   UrlBuf* p = dummyUb->next;
-   UrlBuf* p2;
+   //UrlBuf* dummyUb = (UrlBuf*)malloc(sizeof(UrlBuf));
+   //bzero(dummyUb, sizeof(UrlBuf));
+   //dummyUb->next = *ub;
+   UrlBuf* p = *ub;
+   UrlBuf* p2 = NULL;
+   int flag = 1;
+   int singleflag = 1; 
    while(p)
    {
-	  if(p && p->next)
+	  singleflag = 1;
+	  char part1[100];
+	  bzero(part1, sizeof(part1));
+	  int ret1 = cpy_middle_to_str(p, part1);
+	  //printf("check p:str:%s\n", p->str);
+	  if(!ret1)
+	  {//非法的url
+		 p = p->next;
+		 //printf("illegal p lineno:%d\n", p->lineno);
+		 continue;
+	  }
+	  if(p->next)
 	  {
 		 p2 = p->next;
+		 //printf("p2 check p2:str:%s\n", p2->str);
 		 while(p2)
 		 {
-			if(!p2)
-			   break;
-			char part1[100];
-			bzero(part1, sizeof(part1));
+				
 			char part2[100];
 			bzero(part2, sizeof(part2));
-			
-
+				
+			//printf("p2 check\n");
 			//遍历找到第一个有相同中缀的网址对
-			int ret1 = cpy_middle_to_str(p, part1);
+			//printf("part1:%s\n", part1);
 			int ret2 = cpy_middle_to_str(p2, part2);
-		//	printf("p->lineno:%d, str:%s\n", p->lineno, p->str);
-			printf("p2->lineno:%d, str:%s\n", p2->lineno, p2->str);
-			if(!ret1 || !ret2)
+			//printf("part2:%s\n", part2);
+			//printf("p->lineno:%d, str:%s\n", p->lineno, p->str);
+			//printf("p2->lineno:%d, str:%s\n", p2->lineno, p2->str);
+			if(!ret2)
 			{
-			   if(!ret1)
-				  p = p->next;
-			   if(!ret2)
+			   if(p2)
+			   {//url不合法但是存在
 				  p2 = p2->next;
-			   continue;
+				  continue;
+			   }
+			   else
+			   {//此行为空
+				  break;
+			   }
 			}
-			char* comstr = (char*)malloc(sizeof(char)*50);
+			char* comstr = (char*)malloc(sizeof(char)*100);
 			strcpy(comstr ,lcs(part1, part2));		//free later
-			if(strlen(comstr) < 6)
+			//de dot
+			if(strlen(comstr) < 10 || (!strstr(comstr, ".com") && 
+					 !strstr(comstr, ".cn") && 
+					 !strstr(comstr, ".net")))
 			{//没有找到合适的公共子串
 			   if(p2)
 			   {
@@ -161,23 +171,36 @@ void extract_mergePart(UrlBuf** ub, CommonPart** sList)
 			   {
 				  break;
 			   }
+			   free(comstr);
 			   continue;
 			}
 			else
 			{
+
+			   //printf("plineno:%d:str:%s,\np2:lineno:%dstr:%s\n", p->lineno, p->str, p2->lineno,p2->str);
 			   //找到符合条件的公共字符串
-			   del_dupUb(dummyUb, comstr);	//删除原urlbuf中的符合的url。剩下的接着处理，直到提取出所有的url特征				//may be del all the element
 			   CommonPart tempcp;
 			   bzero(&tempcp, sizeof(tempcp));
 			   tempcp.comStr = (char*)malloc(sizeof(char)*(strlen(comstr) + 1));
 			   strcpy(tempcp.comStr, comstr);
 			   push_CommonPart(sList, tempcp);
-			   
-			   p = dummyUb->next;
-			   printf("compart:%s\n", comstr);
-			   continue;
+			  //ret
+			   //printf("retp:%s", retp->comStr);
+			   del_dupUb(ub, comstr);	//删除原urlbuf中的符合的url。剩下的接着处理，直到提取出所有的url特征				//may be del all the element
+			   free(tempcp.comStr); 
+			   //printf("")
+			   p = (*ub);		//在从头开始遍历，直到每个节点都找到相应的特征对
+			   //printf("p:p->lineno:%d, p->str:%s\n", p->lineno, p->str);
+			   //printf("p2:p->lineno:%d, p->str:%s\n", p->next->lineno, p->next->str);
+			   //printf("p2:p->lineno:%d, p->str:%s\n", p->next->next->lineno, p->next->next->str);
+			   //printf("part1:%s, part2:%s\n", part1, part2);
+				 printf("compart:%s\n", comstr);
+			   flag++;
+			  // printf("flag:%d\n", flag);
+			   singleflag = 0;		
+			   break;
 			}
-			p2 = p2->next;
+			free(comstr);
 		 }
 	  }//end if 
 	  else if(!p->next)
@@ -191,8 +214,10 @@ void extract_mergePart(UrlBuf** ub, CommonPart** sList)
 		 tempcp.comStr = (char*)malloc(sizeof(char)*(strlen(tempcomStr) + 1));
 		 strcpy(tempcp.comStr, tempcomStr);
 		 push_CommonPart(sList, tempcp); 
-
+		 del_dupUb(ub, tempcomStr);
+		 p = (*ub);
 		 printf("compart:%s\n", tempcp.comStr);
+		 free(tempcp.comStr);
 		 //最后一个特征录入完毕，跳出ub循环
 		 break;
 	  }
@@ -200,32 +225,50 @@ void extract_mergePart(UrlBuf** ub, CommonPart** sList)
 	  {
 		 break;
 	  }
+	  if(singleflag == 1)
+	  {//此p指向的url为单个的url无匹配，所以需要单独存储为特征
+		 CommonPart tempcp;
+		 bzero(&tempcp, sizeof(tempcp));
+		 char tempcomStr[100];
+		 bzero(tempcomStr, sizeof(tempcomStr));
+		 cpy_middle_to_str(p, tempcomStr);
+		 tempcp.comStr = (char*)malloc(sizeof(char)*(strlen(tempcomStr) + 1));
+		 strcpy(tempcp.comStr, tempcomStr);
+		 push_CommonPart(sList, tempcp);
 
+		 del_dupUb(ub, tempcomStr);
+		 p = (*ub);
+		 printf("sing compart:%s\n", tempcomStr);
+		 free(tempcp.comStr);
+		 //p = p->next;  //继续遍历下一个
+	  }
 	  //p = p->next;
    }
 }
 
-int write_commonpart_to_file(CommonPart* cp, char* filename)
+
+void insert_url_with_same_siss(UrlBuf** ub1, CommonPart* sList)
 {
-   FILE* fp;
-   CommonPart* p = cp;
-   fp = fopen(filename, "w");
-   if(!fp)
+   UrlBuf* p = (*ub1);
+   UrlBuf* head; 
+   CommonPart* slp = sList;
+   while(slp)
    {
-	  printf("open write file %s failed\n", filename);
-	  return -1;
-   
+	  p = (*ub1);
+	  head = p;
+	  while(p)
+	  {
+		 if(strstr(p->str, slp->comStr))
+		 {
+			push_Url(&slp->ubList, p);
+		 }
+		 p = p->next;
+	  }
+	  *ub1 = head;
+	  //del_dupUb(ub1, sList->comStr);
+
+	  slp = slp->next;
    }
-
-
-   while(p)
-   {
-	  //存入url特征
-	  fprintf(fp, "%s\n", p->comStr);
-	  p = p->next;
-   }
-
-   fclose(fp);
 }
 
 void test_copy_middle(UrlBuf* ub1, UrlBuf* ub2)
@@ -244,23 +287,25 @@ void test_copy_middle(UrlBuf* ub1, UrlBuf* ub2)
    printf("lcs:%s\n", lcs(part1, part2));
 }
 
+
 int main(int argc, char* argv[])
 {
    UrlBuf* ub = NULL;
    CommonPart* sList = NULL;
-   read_urls_to_UrlBuf(&ub, "suculswave");
-
+   read_urls_to_UrlBuf(&ub, "cleansuculswave");
+   UrlBuf* ub1 = NULL;
+   read_urls_to_UrlBuf(&ub1, "cleansuculswave");
   // print_UrlBuf(ub);
    
-   UrlBuf* ub1,* ub2;
-   ub1 = ub;
-   ub2 = ub->next;
 
    //test_copy_middle(ub1, ub2);
    
    extract_mergePart(&ub, &sList);
+   write_urls_to_UrlBuf(ub, "firstDelBuf");
    write_commonpart_to_file(sList, "compartFile");
-   
-   
+   //select 3 url for per slist;
+   insert_url_with_same_siss(&ub1, sList);
+   printf("insert complete\n");
+   write_commonpart_and_url_to_file(sList, "threeCommonUrl");
    return 0;
 }

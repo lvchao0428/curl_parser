@@ -25,7 +25,21 @@ typedef struct FileLink
 
 void print_UrlBuf(UrlBuf* ub);
 
+int write_commonpart_and_url_to_file(CommonPart* sList, char* filename);
+
+int write_commonpart_to_file(CommonPart* sList, char* filename);
+
+void make_a_commonpart(CommonPart* cp, char* str, char* id, char* cls, char* auth, char* time);
+
 void url2file(char* url, char* filename);
+
+CommonPart* push_CommonPart(CommonPart** cp, CommonPart src);
+
+void print_commonpart(CommonPart* sList);
+
+void read_commonpart(CommonPart** sList, char* filename);
+
+void make_a_urlbuf(UrlBuf* ub, char* id, char* cls, char* str, char* siss);
 
 void single_url_to_file(UrlBuf* urls, int curindex);
 

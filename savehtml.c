@@ -22,11 +22,192 @@ void print_UrlBuf(UrlBuf* ub)
    while(p)
    {
 	  printf("%d       %s\n", p->lineno, p->str);
+	  //id cls
+	  printf("id:%s\t classes:%s\n", p->id, p->cls);
 	  p = p->next;
    }
 }
 
+int write_commonpart_to_file(CommonPart* sList, char* filename)
+{
+   FILE* fp;
+   fp = fopen(filename, "w");
+   if(!fp)
+   {
+	  printf("open commonpart write file error\n");
+	  exit(-1);
+   }
 
+   CommonPart* p = sList;
+   while(p)
+   {
+	  //comstr id cls
+	  fprintf(fp, "%s~%s~%s\n", p->comStr, p->id, p->cls);
+	  p = p->next;
+   }
+   fclose(fp);
+
+   return 1;
+}
+
+int write_commonpart_and_url_to_file(CommonPart* sList, char* filename)
+{
+   FILE* fp;
+   CommonPart* p = sList;
+   fp = fopen(filename, "w");
+   if(!fp)
+   {
+	  printf("open write file %s failed\n", filename);
+	  return -1;
+   }
+
+
+   while(p)
+   {
+	  //存入url特征
+	  int num = 0;
+	  //fprintf(fp, "%s\n", p->comStr);
+	  UrlBuf* tempub = p->ubList;
+	  while(num < 3 && tempub)
+	  {
+		 fprintf(fp, "%s", tempub->str);
+		 tempub = tempub->next;
+		 num++;
+	  }
+	  //fprintf(fp,"\n");
+	  p = p->next;
+   }
+
+   fclose(fp);
+   return 1;
+}
+
+void make_a_commonpart(CommonPart* cp, char* str, char* id, char* cls, char* auth, char* time)
+{
+   cp->comStr = (char*)malloc(sizeof(char)*(strlen(str) + 1));
+   memcpy(cp->comStr, str, sizeof(char)*(strlen(str) + 1));
+   
+   cp->id = (char*)malloc(sizeof(char)*(strlen(id) + 1));
+   memcpy(cp->id, id, sizeof(char)*(strlen(id) + 1));
+   cp->cls = (char*)malloc(sizeof(char)*(strlen(cls) + 1));
+   memcpy(cp->cls, cls, sizeof(char)*(strlen(cls) + 1));
+   cp->auth = (char*)malloc(sizeof(char)*(strlen(auth) + 1));
+   memcpy(cp->auth, auth, sizeof(char)*(strlen(auth) + 1));
+   cp->time = (char*)malloc(sizeof(char)*(strlen(time) + 1));
+   memcpy(cp->time , time, sizeof(char)*(strlen(time) + 1));
+
+}
+
+CommonPart* push_CommonPart(CommonPart** cp, CommonPart src)
+{
+   CommonPart* head = *cp;
+   CommonPart* p = head;
+   CommonPart* retp = NULL;
+   if(*cp == NULL)
+   {
+	  *cp = (CommonPart*)malloc(sizeof(CommonPart));
+	  bzero(*cp, sizeof(CommonPart));
+	  //str
+	  (*cp)->comStr = (char*)malloc(sizeof(char)*(strlen(src.comStr) + 1));
+	  memcpy((*cp)->comStr, src.comStr, sizeof(char)*(strlen(src.comStr) + 1));
+	  //id
+	  (*cp)->id = (char*)malloc(sizeof(char)*(strlen(src.id) + 1));
+	  memcpy((*cp)->id, src.id, sizeof(char)*(strlen(src.id) + 1));
+	  //cls
+	  (*cp)->cls = (char*)malloc(sizeof(char)*(strlen(src.cls) + 1));
+	  memcpy((*cp)->cls, src.cls, sizeof(char)*(strlen(src.cls) + 1));
+	  //auth
+	  (*cp)->auth = (char*)malloc(sizeof(char)*(strlen(src.auth) + 1));
+	  memcpy((*cp)->auth, src.auth, sizeof(char)*(strlen(src.auth) + 1));
+	  (*cp)->time = (char*)malloc(sizeof(char)*(strlen(src.time) + 1));
+	  memcpy((*cp)->time , src.time, sizeof(char)*(strlen(src.time) + 1));  
+
+	  (*cp)->next = NULL;
+	  retp = (*cp);
+   }
+   else
+   {
+	  while(p->next)
+	  {
+		 p = p->next;
+	  }
+	  CommonPart* q = (CommonPart*)malloc(sizeof(CommonPart));
+	  bzero(q, sizeof(*q));
+	  q->comStr = (char*)malloc(sizeof(char)*(strlen(src.comStr) + 1));
+	  memcpy(q->comStr, src.comStr, sizeof(char)*(strlen(src.comStr) + 1));
+	  //id
+	  q->id = (char*)malloc(sizeof(char)*(strlen(src.id) + 1));
+	  memcpy(q->id, src.id, sizeof(char)*(strlen(src.id) + 1));
+	  //cls
+	  q->cls = (char*)malloc(sizeof(char)*(strlen(src.cls) + 1));
+	  memcpy(q->cls, src.cls, sizeof(char)*(strlen(src.cls) + 1));	
+	  //auth
+	  q->auth = (char*)malloc(sizeof(char)*(strlen(src.auth) + 1));
+	  memcpy(q->auth, src.auth, sizeof(char)*(strlen(src.auth) + 1));
+	  //time
+	  q->time = (char*)malloc(sizeof(char)*(strlen(src.time) + 1));
+	  memcpy(q->time , src.time, sizeof(char)*(strlen(src.time) + 1));
+
+	  p->next = q;
+	  *cp = head;
+	  retp = q;
+   }
+
+   return retp;
+}
+
+void read_commonpart(CommonPart** sList, char* filename)
+{
+   FILE* fp;
+   size_t len;
+   ssize_t read;
+   fp = fopen(filename, "r");
+   if(!fp)
+   {
+	  exit(-1);
+   }
+   char* line = NULL;
+   while((read = getline(&line, &len, fp)) != -1)
+   {
+	   CommonPart tempcp;
+	   tempcp.comStr = (char*)malloc(sizeof(char)*(strlen(line) + 1));
+	   line[strlen(line)-1] = '\0';
+	   strcpy(tempcp.comStr, line);
+	  
+	   push_CommonPart(sList, tempcp);
+	   
+   }
+
+   //fclose(fp);
+}
+
+void print_commonpart(CommonPart* sList)
+{
+   CommonPart* p = sList;
+   while(p)
+   {	
+	  printf("str:%s, id:%s, cls:%s, auth:%s, time:%s\n", p->comStr, p->id, p->cls, p->auth, p->time);
+	  
+	  p = p->next;
+   }
+}
+
+void make_a_urlbuf(UrlBuf* ub, char* id, char* cls, char* str, char* siss)
+{
+   ub->siss = (char*)malloc(sizeof(char)*(strlen(siss) + 1));
+   ub->id = (char*)malloc(sizeof(char)*(strlen(id) + 1));
+   ub->str = (char*)malloc(sizeof(char)*(strlen(str) + 1));
+   ub->cls = (char*)malloc(sizeof(char)*(strlen(cls) + 1));
+   bzero(ub->siss, sizeof(char)*(strlen(siss) + 1));
+   bzero(ub->id, sizeof(char)*(strlen(id) + 1));
+   bzero(ub->str, sizeof(char)*(strlen(str) + 1));
+   bzero(ub->cls, sizeof(char)*(strlen(cls) + 1));
+
+   strcpy(ub->siss, siss);
+   strcpy(ub->id, id);
+   strcpy(ub->str, str);
+   strcpy(ub->cls, cls);
+}
 
 void url2file(char* url, char* filename)
 {
@@ -85,7 +266,7 @@ int write_urls_to_UrlBuf(UrlBuf* ub, char* urlfilename)
 	  //bzero(line, sizeof(line));
 	  //sprintf(line, "%d^%s", p->lineno, p->str);
 	  fprintf(fp, "%d~%s", p->lineno, p->str);
-	  printf("%d.html write over...", p->lineno);
+	  //printf("%d.html write over...", p->lineno);
 	  p = p->next;
    }
    
@@ -278,7 +459,13 @@ UrlBuf* push_Url(UrlBuf** head, UrlBuf* son)
 	  (*head)->next = NULL;
 	  (*head)->lineno = son->lineno;
 	  (*head)->str = (char*)malloc(sizeof(char)*(strlen(son->str) + 1));
+	  //id cls str siss
 	  memcpy((*head)->str, son->str, sizeof(char)*(strlen(son->str) + 1));
+	  (*head)->id = (char*)malloc(sizeof(char)*(strlen(son->id) + 1));
+	  memcpy((*head)->id, son->id, sizeof(char)*(strlen(son->id) + 1));
+	  (*head)->cls = (char*)malloc(sizeof(char)*(strlen(son->cls) + 1));
+	  memcpy((*head)->cls, son->cls, sizeof(char)*(strlen(son->cls) + 1));
+	  //siss...
 	  temphead = *head; 
    }
    else
@@ -291,6 +478,11 @@ UrlBuf* push_Url(UrlBuf** head, UrlBuf* son)
 	  UrlBuf* q = (UrlBuf*)malloc(sizeof(UrlBuf));
 	  q->next = NULL;
 	  q->lineno = son->lineno;
+	  //id cls str siss
+	  q->id = (char*)malloc(sizeof(char)*(strlen(son->id) + 1));
+	  memcpy(q->id, son->id, sizeof(char)*(strlen(son->id) + 1));
+	  q->cls = (char*)malloc(sizeof(char)*(strlen(son->cls) + 1));
+	  memcpy(q->cls, son->cls, sizeof(char)*(strlen(son->cls) + 1));
 	  q->str = (char*)malloc(sizeof(char)*(strlen(son->str) + 1));
 	  memcpy(q->str, son->str, sizeof(char)*(strlen(son->str) + 1));
 	  tail->next = q;
