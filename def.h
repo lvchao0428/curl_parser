@@ -8,6 +8,7 @@
 #include<unistd.h>
 #include<string.h>
 #include<sys/types.h>
+#include<gumbo.h>
 
 typedef struct UrlBuf
 {

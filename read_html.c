@@ -5,6 +5,7 @@
     > Created Time: Mon Nov 23 15:10:32 2015
  ************************************************************************/
 #include"read_html.h"
+#include<assert.h>
 
 void read_file(FILE* fp, char** output, int* length)
 {
@@ -21,6 +22,46 @@ void read_file(FILE* fp, char** output, int* length)
    }
 
 
+}
+
+char* find_title(GumboNode* root) 
+{
+   GumboVector* root_children = &root->v.element.children;
+   GumboNode* head = NULL;
+   if(root->type == GUMBO_NODE_ELEMENT || root->v.element.children.length >= 2)
+   {
+	 
+	  int i;
+	  for (i = 0; i < root_children->length; ++i) {
+		 GumboNode* child = root_children->data[i];
+		 if (child->type == GUMBO_NODE_ELEMENT &&
+			   child->v.element.tag == GUMBO_TAG_HEAD) {
+			head = child;
+			break;
+		 }
+	  }
+   }
+
+   if(head != NULL)
+   {
+	 GumboVector* head_children = &head->v.element.children;
+	 int i;
+	 for (i = 0; i < head_children->length; ++i) {
+		GumboNode* child = head_children->data[i];
+		if (child->type == GUMBO_NODE_ELEMENT &&
+			  child->v.element.tag == GUMBO_TAG_TITLE) {
+		   if (child->v.element.children.length != 1) {
+			  return "<empty title>";
+		   }
+		   GumboNode* title_text = child->v.element.children.data[0];
+		   if(title_text->type == GUMBO_NODE_TEXT || title_text->type == GUMBO_NODE_WHITESPACE)
+			   return title_text->v.text.text;
+		}
+	 }
+  }
+
+  
+  return "<no title found>";
 }
 
 void read_all_attr(GumboNode* root)
@@ -265,6 +306,23 @@ void multi_layer_Nodefind(GumboNode* root, GumboNode** deepNode, char* part1, ch
 
    
 }
+/*
+ *定位到内容节点，和时间节点
+ * */
+void locate_node(GumboNode* root, GumboNode** contentNode, GumboNode** timeNode)
+{
+   if(!root)
+   {
+	  return;
+   }
+   else if(*contentNode == NULL || *timeNode == NULL)
+   {
+	  if(root->type == GUMBO_NODE_ELEMENT)
+	  {
+
+	  }
+   }
+}
 
 void read_html(GumboNode* root, 
 	  GumboNode** contentNode,
@@ -471,6 +529,8 @@ void read_content(GumboNode* node, char* cls_id)
    }
 }
 
+
+
 int fill_content(char* htmlsFile, 
 	  char** contentCon, 
 	  char** authCon,
@@ -502,7 +562,12 @@ int fill_content(char* htmlsFile,
    GumboNode* authNode = NULL;
    GumboNode* timeNode = NULL;
    //char* content = NULL;
-
+   //如果title里面有302或者404 则不计数
+   char* title = find_title(output->root);
+   if(strstr(title, "302") || strstr(title, "404") || strstr(title, "403"))
+   {
+	  return -2;
+   }
    read_html(output->root, &contentNode, &authNode, &timeNode, id, cls, auth, time);
    //printf("elementstr:\n");
   // char* tempend = contentNode->v.element.original_end_tag.data + contentNode->v.element.original_end_tag.length;

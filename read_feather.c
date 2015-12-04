@@ -436,6 +436,10 @@ int search_content_with_num(UrlBuf* ub, CommonPart* sList, int fileno,
    {//找到siss 但是没有抓到正文
 	  return -1;
    }
+   else if(ret == -2)
+   {
+	  return -2;
+   }
    else 
    {
 	  return 1;
@@ -453,10 +457,10 @@ void test_targetPercent(UrlBuf* mainurl, CommonPart* sList, TargetPercent* tp)
 	  int ret = search_content_with_num(pub, sList, pub->lineno, &content, &auth, &time);
 
 	  if(ret == -2)
-	  {//无siss
-		 tp->totalhtmlnum++;
+	  {//无siss,或者为非法网页
 		 printf("file:%d.html no samplecomplete...\n", pub->lineno);
-
+		 tp->totalhtmlnum--;
+		 tp->hassissnum--;
 		 pub = pub->next;
 		 if(!pub)
 			break;

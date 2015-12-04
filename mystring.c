@@ -27,6 +27,41 @@ int count_num(char* a)
    return num;
 }
 
+int find_str_times(char* str, char* word)
+{//返回str里面，在begPos和endPos下标范围内，包含word的个数
+   int i = 0;
+
+   int times = 0;
+   while(i < strlen(str) && str[i] != '\0')
+   {
+	  //不包含重叠情况，也即，abababa，aba，应return 2；
+	  int j = 0;
+	  if(tolower(str[i]) == word[j])
+	  {
+		 while(word[j] != '\0')
+		 {
+			if(tolower(str[i+j]) != word[j])
+			{
+			   break;
+			}
+			else
+			{
+			   j++;
+			}
+		 }
+		 if(word[j] == '\0' )
+		 {
+			i+=j;
+			times ++;
+		 }
+	  }
+	  i++;
+   }
+
+   return times;
+
+}
+
 //change b to c if b == c
 char* replace(char* a, char* b, char * c)
 {
@@ -106,3 +141,31 @@ char* lcs(char* a, char* b)
 
    return dest;
 }
+
+int find_comma_num_out(char* line)		//找到里面内容部分的标点数量
+{//找到字符串里面目标符号的数量
+   
+   char comma[4][5] = {
+	  {","},
+	  {"、"},
+	  {"，"},
+	  {"。"},
+   };
+   int comma_num = 0;
+   //LablePosPair* wordPair = (LablePosPair*)malloc(sizeof(LablePosPair));
+   //wordPair->next = NULL;
+   //out_content_scope(line, wordPair);
+   //LablePosPair* p = wordPair->next;
+
+   int i = 0;
+   int j=0;
+   while(j < 4)
+   {
+	  comma_num += find_str_times(line, comma[j]);
+	  j++;
+   }
+
+      
+   return comma_num;
+}
+
